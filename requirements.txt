@@ -1,0 +1,8 @@
+# uArm-Python-SDK requirements
+pyserial>3.0
+
+# PyTest   (https://pytest.org/)
+# -  mature full-featured testing tool that helps you write better programs
+# -  running unit tests with and without code coverage
+pytest==5.0.1
+pytest-cov==2.7.1

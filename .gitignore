@@ -14,5 +14,8 @@
 # GoLand files
 *.idea
 
+# Python SDK venv
+venv/
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
