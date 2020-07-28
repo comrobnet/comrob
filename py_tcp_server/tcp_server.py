@@ -17,6 +17,12 @@ class TcpServer:
         # Create a TCP/IP socket
         self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    def __del__(self):
+        """
+        Destructor of TcpSever, making sure connection is closed.
+        """
+        self.close()
+
     def connect(self, address, port, timeout):
         """
         Wait for connection on address/port, raise error on timeout.
@@ -32,13 +38,10 @@ class TcpServer:
         # bind to the address of the port and enable listening
         self.__tcp_socket.bind((address, port))
         self.__tcp_socket.listen(1)
-        # start listening loop [s]
-        start_time = time.perf_counter()
-        while (time.perf_counter() - start_time) < timeout:
-            # wait for connection
-            # Create a TCP/IP socket
-            connection, client_address = self.__tcp_socket.accept()
-            return connection
+        self.__tcp_socket.settimeout(timeout)
+        # wait for connection
+        connection, client_address = self.__tcp_socket.accept()
+        return connection
 
     def close(self):
         """
