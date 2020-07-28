@@ -1,9 +1,8 @@
 """
 The TcpServer class sets up the TCP server and handles the communication with the uArm-Python-SDK.
 """
+import json
 import socket
-import sys
-import time
 
 
 class TcpServer:
@@ -42,6 +41,21 @@ class TcpServer:
         # wait for connection
         connection, client_address = self.__tcp_socket.accept()
         return connection
+
+    def function_from_json(self, class_object, function_json):
+        """
+        Receives an object and a function including args and kwargs and calls the respective function of the object.
+        :param class_object: object of which function is called
+        :type class_object: any
+        :param function_json: json string defining function and args/kwargs.
+        :type function_json: str
+        """
+        function_dict = json.loads(function_json)
+        try:
+            function = getattr(class_object, function_dict.function)
+        except Exception as e:
+            raise e
+
 
     def close(self):
         """

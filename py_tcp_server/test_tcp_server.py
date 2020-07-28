@@ -1,6 +1,7 @@
 """
 Test file for  tcp_server.py.
 """
+import json
 import socket
 import threading
 import time
@@ -33,6 +34,7 @@ class TestTcpServer(unittest.TestCase):
         """
         Test connecting with tcp server.
         """
+        # run server in separate thread
         t_server = threading.Thread(target=self.tcp_server.connect, args=("localhost", 10002, 10), daemon=True)
         t_server.start()
         time.sleep(0.001)
@@ -41,6 +43,16 @@ class TestTcpServer(unittest.TestCase):
         fake_client.connect(("localhost", 10002))
         fake_client.close()
         t_server.join()
+
+    def test_convert_json_to_function(self):
+        """
+        Test converting json message to corresponding function.
+        """
+        # def set_position(self, x=None, y=None, z=None, speed=None, relative=False, wait=False, timeout=10,
+        # callback=None, cmd='G0')
+        test_dict_1 = {"function": "set_position", "args": {1: 0.0, 2: 0.0, 3: 10.0}, "kwargs": {"wait": True}}
+        test_json_1 = json.dumps(test_dict_1)
+
 
 
 if __name__ == '__main__':
