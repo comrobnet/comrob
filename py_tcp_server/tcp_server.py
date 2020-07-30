@@ -22,6 +22,23 @@ class TcpServer:
         """
         self.close()
 
+    @staticmethod
+    def function_from_json(class_object, function_json):
+        """
+        Receives an object and a function including args and kwargs and calls the respective function of the object.
+        :param class_object: object of which function is called
+        :type class_object: any
+        :param function_json: json string defining function and args/kwargs.
+        :type function_json: str
+        """
+        function_dict = json.loads(function_json)
+        # get corresponding function of object
+        function = getattr(class_object, function_dict["function"])
+        # set args and kwargs
+        args = function_dict["args"]
+        kwargs = function_dict["kwargs"]
+        function(*args, **kwargs)
+
     def connect(self, address, port, timeout):
         """
         Wait for connection on address/port, raise error on timeout.
@@ -41,21 +58,6 @@ class TcpServer:
         # wait for connection
         connection, client_address = self.__tcp_socket.accept()
         return connection
-
-    def function_from_json(self, class_object, function_json):
-        """
-        Receives an object and a function including args and kwargs and calls the respective function of the object.
-        :param class_object: object of which function is called
-        :type class_object: any
-        :param function_json: json string defining function and args/kwargs.
-        :type function_json: str
-        """
-        function_dict = json.loads(function_json)
-        try:
-            function = getattr(class_object, function_dict.function)
-        except Exception as e:
-            raise e
-
 
     def close(self):
         """
