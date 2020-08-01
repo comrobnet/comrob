@@ -52,10 +52,12 @@ class TestTcpServer(unittest.TestCase):
         # def set_position(self, x=None, y=None, z=None, speed=None, relative=False, wait=False, timeout=10,
         # callback=None, cmd='G0')
         test_dict_1 = {"function": "set_position", "args": [0.0, 0.0, 10.0],
-                       "kwargs": {"wait": True, "timeout": 15}}
+                       "kwargs": {"wait": True, "timeout": 15},
+                       "disconnect": False}
         test_json_1 = json.dumps(test_dict_1)
+        test_dict_2 = json.loads(test_json_1)
         mock_swift = MockSwiftApi()
-        self.tcp_server.function_from_json(mock_swift, test_json_1)
+        self.tcp_server.function_from_json(mock_swift, test_dict_2)
 
 
 if __name__ == '__main__':

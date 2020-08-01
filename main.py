@@ -1,9 +1,12 @@
 """
 This file contains the main fucntion of the Python TCP server / robot controller.
 """
-
+import json
+import re
 import socket
 import time
+
+from collections import deque
 
 from py_tcp_server.mock_swift_api import MockSwiftApi
 from py_tcp_server.tcp_server import TcpServer
@@ -28,20 +31,32 @@ def main():
     data_buffer_size = 4096
     # main loop
     while True:
+        time.sleep(0.1)
         server = TcpServer()
         print("comrob: Connecting to ", address, ", port: ", port, ".")
-        time.sleep(0.1)
         try:
             connection = server.connect(address, port, connect_timeout)
-            "comrob: Connected."
-            # receive data as bytes
-            data = connection.recv(data_buffer_size).decode("utf-8")
-            try:
-                # call function
-                TcpServer.function_from_json(swift, data)
-            except Exception:
-                # TODO (ALR): replace with message
-                print("comrob: failed to call function")
+            print("comrob: Connected.")
+            data_queue = deque()
+            # read messages until connection is closed
+            while True:
+                time.sleep(0.1)
+                # receive data as bytes
+                data = connection.recv(data_buffer_size).decode("utf-8")
+                # split multiple messages if needed
+                data_list = re.split('(\{.*?\})(?= *\{)', data)
+                [data_queue.append(element) for element in data_list if len(element) != 0]
+                if len(data_queue) != 0:
+                    message = json.loads(data_queue.popleft())
+                    if message["disconnect"]:
+                        print("comrob: Disconnected.")
+                        break
+                    try:
+                        # call function
+                        TcpServer.function_from_json(swift, message)
+                    except Exception:
+                        # TODO (ALR): replace with message
+                        print("comrob: failed to call function")
 
         except socket.timeout:
             print("comrob: failed to connect - timeout")

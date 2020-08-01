@@ -13,8 +13,10 @@ class TcpServer:
         """
         Start server on initialisation
         """
-        # Create a TCP/IP socket
+        # create a TCP/IP socket
         self.__tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # allow socket to reuse address
+        self.__tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def __del__(self):
         """
@@ -23,15 +25,14 @@ class TcpServer:
         self.close()
 
     @staticmethod
-    def function_from_json(class_object, function_json):
+    def function_from_json(class_object, function_dict):
         """
         Receives an object and a function including args and kwargs and calls the respective function of the object.
         :param class_object: object of which function is called
         :type class_object: any
-        :param function_json: json string defining function and args/kwargs.
-        :type function_json: str
+        :param function_dict: dict from json message.
+        :type function_dict: dict
         """
-        function_dict = json.loads(function_json)
         # get corresponding function of object
         function = getattr(class_object, function_dict["function"])
         # set args and kwargs
