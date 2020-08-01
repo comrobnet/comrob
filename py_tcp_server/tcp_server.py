@@ -53,8 +53,8 @@ class TcpServer:
         """
         # bind to the address of the port and enable listening
         self.__tcp_socket.bind((address, port))
-        self.__tcp_socket.listen(1)
         self.__tcp_socket.settimeout(timeout)
+        self.__tcp_socket.listen(1)
         # wait for connection
         connection, client_address = self.__tcp_socket.accept()
         return connection

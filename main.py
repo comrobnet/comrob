@@ -23,18 +23,19 @@ def main():
     # start TCP server
     print("comrob: Starting TCP server.")
     address = "localhost"
-    port = 10017
-    connect_timeout = 5
+    port = 10002
+    connect_timeout = 60
     data_buffer_size = 4096
     # main loop
     while True:
         server = TcpServer()
         print("comrob: Connecting to ", address, ", port: ", port, ".")
+        time.sleep(0.1)
         try:
-            # this serves as a time.sleep as well
             connection = server.connect(address, port, connect_timeout)
             "comrob: Connected."
-            data = connection.recv(data_buffer_size)
+            # receive data as bytes
+            data = connection.recv(data_buffer_size).decode("utf-8")
             try:
                 # call function
                 TcpServer.function_from_json(swift, data)
@@ -42,10 +43,13 @@ def main():
                 # TODO (ALR): replace with message
                 print("comrob: failed to call function")
 
-
         except socket.timeout:
-            server.close()
             print("comrob: failed to connect - timeout")
+        except OSError as error:
+            if error.errno == 98:
+                print("comrob: failed to connect - adress already in use.")
+
+        server.close()
 
 
 if __name__ == '__main__':
