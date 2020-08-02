@@ -1,8 +1,9 @@
 """
 The TcpServer class sets up the TCP server and handles the communication with the uArm-Python-SDK.
 """
-import json
 import socket
+
+from py_tcp_server.comrob_error import ComrobError, ErrorCode
 
 
 class TcpServer:
@@ -33,12 +34,22 @@ class TcpServer:
         :param function_dict: dict from json message.
         :type function_dict: dict
         """
-        # get corresponding function of object
-        function = getattr(class_object, function_dict["function"])
-        # set args and kwargs
-        args = function_dict["args"]
-        kwargs = function_dict["kwargs"]
-        function(*args, **kwargs)
+        try:
+            # get corresponding function of object
+            function = getattr(class_object, function_dict["function"])
+            # set args and kwargs
+            args = function_dict["args"]
+            kwargs = function_dict["kwargs"]
+            function(*args, **kwargs)
+        except AttributeError:
+            raise ComrobError(ErrorCode.E0000, "Attribute function of object not found.")
+        except KeyError:
+            raise ComrobError(ErrorCode.E0001, "Key Error.")
+        except TypeError:
+            raise ComrobError(ErrorCode.E0002, "Unexpected keyword argument.")
+        except Exception:
+            # make sure only comrob errors are raised inside the function
+            raise ComrobError(ErrorCode.E0003, "Calling function from Message failed.")
 
     def connect(self, address, port, timeout):
         """
@@ -48,17 +59,26 @@ class TcpServer:
         :param port: port of tcp server (e.g. 10000)
         :type port: int
         :param timeout: timeout duration in seconds.
-        :type timeout: int
+        :type timeout: float
         :return: connection to client
         :rtype socket.connection
         """
-        # bind to the address of the port and enable listening
-        self.__tcp_socket.bind((address, port))
-        self.__tcp_socket.settimeout(timeout)
-        self.__tcp_socket.listen(1)
-        # wait for connection
-        connection, client_address = self.__tcp_socket.accept()
-        return connection
+        try:
+            # bind to the address of the port and enable listening
+            self.__tcp_socket.bind((address, port))
+            self.__tcp_socket.settimeout(timeout)
+            self.__tcp_socket.listen(1)
+            # wait for connection
+            connection, client_address = self.__tcp_socket.accept()
+            return connection
+        except socket.timeout:
+            raise ComrobError(ErrorCode.E0004, "Connection failed - timeout.")
+        except OSError as error:
+            if error.errno == 98:
+                raise ComrobError(ErrorCode.E0005, "Connection failed - address already in use.")
+            raise ComrobError(ErrorCode.E0006, "Connection failed - OS error")
+        except Exception:
+            raise ComrobError(ErrorCode.E0007, "Connection failed.")
 
     def close(self):
         """
