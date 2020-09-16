@@ -6,3 +6,9 @@ pyserial>3.0
 # -  running unit tests with and without code coverage
 pytest==5.0.1
 pytest-cov==2.7.1
+
+# twitch api
+twitchio==1.1.0
+
+# handling .enf
+python-dotenv==0.14.0
