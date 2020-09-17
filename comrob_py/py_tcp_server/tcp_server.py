@@ -3,9 +3,10 @@ The TcpServer class sets up the TCP server and handles the communication with th
 """
 import socket
 
-from py_tcp_server.comrob_error import ComrobError, ErrorCode
+from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
 
 
+#DEPRECTAED - might be useful in future projects
 class TcpServer:
     """
     The TcpServer class sets up the TCP server and handles the communication with the uArm-Python-SDK.

@@ -6,6 +6,8 @@ import json
 import socket
 import time
 
+
+# DEPRECATED
 if __name__ == '__main__':
     address = "localhost"
     port = 10002

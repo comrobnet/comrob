@@ -7,12 +7,13 @@ import time
 
 from collections import deque
 
-from py_tcp_server.comrob_error import ComrobError
-from py_tcp_server.mock_swift_api import MockSwiftApi
-from py_tcp_server.tcp_server import TcpServer
+from comrob_py.robot_handler.comrob_error import ComrobError
+from comrob_py.robot_handler.mock_swift_api import MockSwiftApi
+from comrob_py.py_tcp_server.tcp_server import TcpServer
 from uarm_python_sdk.uarm.wrapper import SwiftAPI
 
 
+#DEPRECATED
 def main():
     # connect to uArm
     try:

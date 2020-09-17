@@ -7,9 +7,9 @@ import threading
 import time
 import unittest
 
-from py_tcp_server.comrob_error import ComrobError, ErrorCode
-from py_tcp_server.mock_swift_api import MockSwiftApi
-from py_tcp_server.tcp_server import TcpServer
+from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
+from comrob_py.robot_handler.mock_swift_api import MockSwiftApi
+from comrob_py.py_tcp_server.tcp_server import TcpServer
 
 
 class TestTcpServer(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestTcpServer(unittest.TestCase):
         """
         Test init, connecting and close.
         """
-        with self.assertRaises(socket.timeout) as raised:
+        with self.assertRaises(ComrobError) as raised:
             self.__tcp_server.connect("localhost", 10000, 1)
 
     # TODO (ALR): This test produces a ResourceWarning, needs to be investigated.
