@@ -6,8 +6,6 @@
 set -e
 
 echo "Started creating virtual environment."
-# deactivate any sourced environment
-deactivate
 # read path from console input
 path=$1
 # create and source virtual environment
