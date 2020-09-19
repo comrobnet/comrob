@@ -1,58 +1,67 @@
 """
 This file contains the twitch-bot allowing to communicate with the comrob.
 """
-import os
-
-from collections import deque
-from dotenv import load_dotenv
 from twitchio.ext import commands
 
 
-load_dotenv()
-
-command_buffer = deque()
-
-# set up the bot
-bot = commands.Bot(
-    irc_token=os.environ['TMI_TOKEN'],
-    client_id=os.environ['CLIENT_ID'],
-    nick=os.environ['BOT_NICK'],
-    prefix=os.environ['BOT_PREFIX'],
-    initial_channels=[os.environ['CHANNEL']]
-)
-
-
-@bot.event
-async def event_ready():
+class ComrobBot:
     """
-    Called once when the bot goes online.
+    The ComrobBot class handles the communication with the twitch chat and the robot controller
     """
-    print(f"{os.environ['BOT_NICK']} is online!")
-    ws = bot._ws  # this is only needed to send messages within event_ready
-    await ws.send_privmsg(os.environ['CHANNEL'], f"/me has landed!")
+    def __init__(self, irc_token, nick, prefix, initial_channels):
+        """
+        Init function for the bot.
+        :param irc_token: oath token to use for irc for twitch chat
+        :type irc_token: str
+        :param nick: nickname of bot
+        :type nick: str
+        :param prefix: prefix for bot command
+        :type prefix: str
+        :param initial_channels: channels for bot to join on startup
+        :type initial_channels: list
+        """
+        # set up the bot
+        self.__bot = commands.Bot(irc_token=irc_token, nick=nick, prefix=prefix, initial_channels=initial_channels)
+        self.set_up()
 
+    def set_up(self):
+        """
+        Set-up function for the bot, declaring event-functions and commands.
+        """
+        @self.__bot.event
+        async def event_ready():
+            """
+            Function called when the bot goes online.
+            """
+            print(f"{self.__bot.nick} is online!")
+            # this is only needed to send messages within event_ready
+            ws = self.__bot._ws
+            await ws.send_privmsg(self.__bot.initial_channels, f"/me is online!")
 
-@bot.event
-async def event_message(context):
-    """
-    Runs every time a message is sent in chat.
-    """
-    # make sure the bot ignores itself and the streamer
-    if context.author.name.lower() == os.environ['BOT_NICK'].lower():
-        return
+        @self.__bot.event
+        async def event_message(context):
+            """
+            Runs every time a message is sent in chat.
+            """
+            # make sure the bot ignores itself and the streamer
+            if context.author.name.lower() == self.__bot.nick.lower():
+                return
 
-    # if content of message is a command, add it to command buffer
-    if context.content[0] == "!":
-        command_buffer.append(context.content)
+            # # if content of message is a command, add it to command buffer
+            # if context.content[0] == "!":
+            #     command_buffer.append(context.content)
+            #
+            # print("Command Buffer: ", command_buffer)
 
-    print("Command Buffer: ", command_buffer)
-    # await bot.handle_commands(context)
+            await self.__bot.handle_commands(context)
 
+        @self.__bot.command(name='test')
+        async def test(context):
+            await context.send('test passed!')
 
-@bot.command(name='test')
-async def test(context):
-    await context.send('test passed!')
+    def run(self):
+        """
+        Run bot, initialize event loop (blocking).
+        """
+        self.__bot.run()
 
-
-if __name__ == "__main__":
-    bot.run()
