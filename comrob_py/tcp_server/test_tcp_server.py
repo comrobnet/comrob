@@ -9,7 +9,7 @@ import unittest
 
 from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
 from comrob_py.robot_handler.mock_swift_api import MockSwiftApi
-from comrob_py.py_tcp_server.tcp_server import TcpServer
+from comrob_py.tcp_server.tcp_server import TcpServer
 
 
 class TestTcpServer(unittest.TestCase):

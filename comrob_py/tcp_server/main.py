@@ -9,7 +9,7 @@ from collections import deque
 
 from comrob_py.robot_handler.comrob_error import ComrobError
 from comrob_py.robot_handler.mock_swift_api import MockSwiftApi
-from comrob_py.py_tcp_server.tcp_server import TcpServer
+from comrob_py.tcp_server.tcp_server import TcpServer
 from uarm_python_sdk.uarm.wrapper import SwiftAPI
 
 
