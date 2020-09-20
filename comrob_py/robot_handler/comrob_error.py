@@ -41,3 +41,6 @@ class ErrorCode(Enum):
     E0005 = 5  # TcpServer
     E0006 = 6  # TcpServer
     E0007 = 7  # TcpServer
+    E0008 = 8  # RobotHandler
+    E0009 = 9  # UserHandler
+    E0010 = 10  # UserHandler

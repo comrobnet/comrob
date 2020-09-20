@@ -24,8 +24,8 @@ def main():
     comrob_bot_thread_1.start()
     command_buffer = deque()
     while True:
-        comrob_bot_thread_2 = threading.Thread(target=comrob_bot.clear_command_buffer)
         time.sleep(10)
+        comrob_bot_thread_2 = threading.Thread(target=comrob_bot.clear_command_buffer)
         # get buffer
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(comrob_bot.get_command_buffer)

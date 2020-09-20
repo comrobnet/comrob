@@ -66,10 +66,14 @@ class ComrobBot:
 
         @self.__bot.command()
         async def height(context, z: int):
+            user_name = context.author.name.lower()
+            if self.__check_user(user_name):
+                await context.send("Only one command per user per session @" + user_name + ".")
+                return
             self.__command_buffer.append({CommandKey.function: "height",
                                           CommandKey.args: [z],
                                           CommandKey.kwargs: {},
-                                          CommandKey.user: context.author.name.lower()})
+                                          CommandKey.user: user_name})
             await context.send("Command: height(" + str(z) + ") added to the command queue.")
 
     def run(self):
@@ -99,3 +103,10 @@ class ComrobBot:
         """
         await self.__bot._ws.send_privmsg(*self.__bot.initial_channels, message)
 
+    def __check_user(self, user_name):
+        """
+        Check if user already submitted command, if so dont add it to queue and send a message.
+        :return: true if user name in command buffer
+        :rtype: bool
+        """
+        return user_name in [info[CommandKey.user] for info in self.__command_buffer]

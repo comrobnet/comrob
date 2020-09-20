@@ -27,6 +27,7 @@ class MockSwiftApi:
 
     def get_position(self, wait=True, timeout=None, callback=None):
         print("get_position ", wait, timeout, callback)
+        return [0, 0, 0]
 
     def set_position(self, x=None, y=None, z=None, speed=None, relative=False, wait=False, timeout=10, callback=None, cmd='G0'):
         print("set_position ", x, y, z, speed, relative, wait, timeout, callback, cmd)
