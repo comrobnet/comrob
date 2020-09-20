@@ -1,7 +1,10 @@
 """
 This file contains the twitch-bot allowing to communicate with the comrob.
 """
+from collections import deque
 from twitchio.ext import commands
+
+from comrob_py.enums.command_key import CommandKey
 
 
 class ComrobBot:
@@ -22,9 +25,11 @@ class ComrobBot:
         """
         # set up the bot
         self.__bot = commands.Bot(irc_token=irc_token, nick=nick, prefix=prefix, initial_channels=initial_channels)
-        self.set_up()
+        self.__command_buffer = deque()
 
-    def set_up(self):
+        self.__set_up()
+
+    def __set_up(self):
         """
         Set-up function for the bot, declaring event-functions and commands.
         """
@@ -33,10 +38,10 @@ class ComrobBot:
             """
             Function called when the bot goes online.
             """
-            print(f"{self.__bot.nick} is online!")
+            print(self.__bot.nick, "is online!")
             # this is only needed to send messages within event_ready
             ws = self.__bot._ws
-            await ws.send_privmsg(self.__bot.initial_channels, f"/me is online!")
+            await ws.send_privmsg(*self.__bot.initial_channels, f"/me is online!")
 
         @self.__bot.event
         async def event_message(context):
@@ -55,13 +60,42 @@ class ComrobBot:
 
             await self.__bot.handle_commands(context)
 
-        @self.__bot.command(name='test')
+        @self.__bot.command()
         async def test(context):
-            await context.send('test passed!')
+            await context.send("test passed!")
+
+        @self.__bot.command()
+        async def height(context, z: int):
+            self.__command_buffer.append({CommandKey.function: "height",
+                                          CommandKey.args: [z],
+                                          CommandKey.kwargs: {},
+                                          CommandKey.user: context.author.name.lower()})
+            await context.send("Command: height(" + str(z) + ") added to the command queue.")
 
     def run(self):
         """
         Run bot, initialize event loop (blocking).
         """
         self.__bot.run()
+
+    def get_command_buffer(self):
+        """
+        Returns command buffer.
+        """
+        return self.__command_buffer.copy()
+
+    def clear_command_buffer(self):
+        """
+        Clears command buffer.
+        """
+        self.__command_buffer = deque()
+        return
+
+    async def send_message(self, message):
+        """
+        Send message to stream at any time.
+        :param message: message to be sent in channel chat
+        :type message: str
+        """
+        await self.__bot._ws.send_privmsg(*self.__bot.initial_channels, message)
 
