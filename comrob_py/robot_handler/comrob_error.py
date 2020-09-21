@@ -44,3 +44,4 @@ class ErrorCode(Enum):
     E0008 = 8  # RobotHandler
     E0009 = 9  # UserHandler
     E0010 = 10  # UserHandler
+    E0011 = 11  # CommandHandler

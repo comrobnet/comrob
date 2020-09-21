@@ -4,7 +4,7 @@ This file contains the twitch-bot allowing to communicate with the comrob.
 from collections import deque
 from twitchio.ext import commands
 
-from comrob_py.enums.command_key import CommandKey
+from comrob_py.enums.command_key import CommandKey, FunctionKey
 
 
 class ComrobBot:
@@ -70,10 +70,10 @@ class ComrobBot:
             if self.__check_user(user_name):
                 await context.send("Only one command per user per session @" + user_name + ".")
                 return
-            self.__command_buffer.append({CommandKey.function: "height",
-                                          CommandKey.args: [z],
-                                          CommandKey.kwargs: {},
-                                          CommandKey.user: user_name})
+            self.__command_buffer.append({CommandKey.Function: FunctionKey.Height,
+                                          CommandKey.Args: [z],
+                                          CommandKey.Kwargs: {},
+                                          CommandKey.User: user_name})
             await context.send("Command: height(" + str(z) + ") added to the command queue.")
 
     def run(self):
@@ -109,4 +109,4 @@ class ComrobBot:
         :return: true if user name in command buffer
         :rtype: bool
         """
-        return user_name in [info[CommandKey.user] for info in self.__command_buffer]
+        return user_name in [info[CommandKey.User] for info in self.__command_buffer]

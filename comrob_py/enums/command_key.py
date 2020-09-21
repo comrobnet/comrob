@@ -6,7 +6,12 @@ from enum import Enum
 
 
 class CommandKey(Enum):
-    function = 0
-    args = 1
-    kwargs = 2
-    user = 3
+    Function = 0
+    Args = 1
+    Kwargs = 2
+    User = 3
+    Count = 4
+
+
+class FunctionKey(Enum):
+    Height = "height"
