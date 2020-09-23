@@ -1,6 +1,7 @@
 """
 This file offers functions that handle the command queue.
 """
+import time
 import threading
 
 from comrob_py.enums.command_key import CommandKey, FunctionKey
@@ -50,4 +51,3 @@ def send_message(bot, message):
     thread = threading.Thread(target=bot.send_message, args=(message,))
     thread.start()
     thread.join()
-    return

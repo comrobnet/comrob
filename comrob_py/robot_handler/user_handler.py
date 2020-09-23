@@ -28,7 +28,7 @@ class UserHandler:
         :param z_base_offset: offset of uarm base in z-direction in mm
         :type z_base_offset: float
         :param min_radius_xy: minimum workspace radius
-        :type min_radius_xy:float
+        :type min_radius_xy: float
         :param max_radius_xy: maximum workspace radius
         :type max_radius_xy: float
         """

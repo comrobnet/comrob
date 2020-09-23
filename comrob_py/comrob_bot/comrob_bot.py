@@ -1,6 +1,8 @@
 """
 This file contains the twitch-bot allowing to communicate with the comrob.
 """
+import asyncio
+
 from collections import deque
 from twitchio.ext import commands
 
@@ -61,10 +63,6 @@ class ComrobBot:
             await self.__bot.handle_commands(context)
 
         @self.__bot.command()
-        async def test(context):
-            await context.send("test passed!")
-
-        @self.__bot.command()
         async def height(context, z: int):
             user_name = context.author.name.lower()
             if self.__check_user(user_name):
@@ -93,15 +91,18 @@ class ComrobBot:
         Clears command buffer.
         """
         self.__command_buffer = deque()
-        return
 
-    async def send_message(self, message):
+    def send_message(self, message):
         """
         Send message to stream at any time.
         :param message: message to be sent in channel chat
         :type message: str
         """
-        await self.__bot._ws.send_privmsg(*self.__bot.initial_channels, message)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        loop.run_until_complete(self.__bot._ws.send_privmsg(*self.__bot.initial_channels, message))
+        loop.close()
 
     def __check_user(self, user_name):
         """
