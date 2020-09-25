@@ -21,17 +21,19 @@ def main():
     load_dotenv()
     comrob_bot = ComrobBot(irc_token=os.environ["TMI_TOKEN"], nick=os.environ["BOT_NICK"],
                            prefix=os.environ["BOT_PREFIX"], initial_channels=[os.environ["CHANNEL"]])
-    user_handler = UserHandler(edge_length=float(os.environ["EDGE_LENGTH"]), x_offset=float(os.environ["X_OFFSET"]),
-                               y_offset=float(os.environ["Y_OFFSET"]), z_offset=float(os.environ["Z_OFFSET"]),
+    # start main thread
+    comrob_bot_thread_1 = threading.Thread(target=comrob_bot.run)
+    comrob_bot_thread_1.start()
+    user_handler = UserHandler(edge_length=float(os.environ["EDGE_LENGTH"]),
+                               x_offset=float(os.environ["X_OFFSET"]),
+                               y_offset=float(os.environ["Y_OFFSET"]),
+                               z_offset=float(os.environ["Z_OFFSET"]),
                                xy_base_offset=float(os.environ["XY_BASE_OFFSET"]),
                                z_base_offset=float(os.environ["Z_BASE_OFFSET"]),
                                min_radius_xy=float(os.environ["MIN_RADIUS_XY"]),
                                max_radius_xy=float(os.environ["MAX_RADIUS_XY"]))
-    # start main thread
-    comrob_bot_thread_1 = threading.Thread(target=comrob_bot.run)
-    comrob_bot_thread_1.start()
     # wait for comrob bot to start before sending messages etc
-    time.sleep(2)
+    time.sleep(3)
     command_buffer = deque()
     loop_time = 30
     while True:
@@ -54,8 +56,7 @@ def main():
             function = getattr(user_handler, command[CommandKey.Function].value)
             function(*command[CommandKey.Args])
         except ComrobError as error:
-            if error.error_code is not ErrorCode.E0011:
-                raise ComrobError(error.error_code, error.message)
+            # except expected errors and send message to chat instead
             send_message(comrob_bot, error.message)
 
         # clear buffer of bot

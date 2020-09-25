@@ -20,7 +20,7 @@ class RobotHandler:
         # connect to uArm
         try:
             self.__swift = SwiftAPI(filters={'hwid': 'USB VID:PID=2341:0042'})
-            self.__swift.waiting_ready(timeout=5)
+            self.__swift.waiting_ready(timeout=10)
         except Exception:  # can only except like this due to error kind used in swift api
             self.__swift = MockSwiftApi()
 

@@ -45,3 +45,4 @@ class ErrorCode(Enum):
     E0009 = 9  # UserHandler
     E0010 = 10  # UserHandler
     E0011 = 11  # CommandHandler
+    E0012 = 12  # Coordinates
