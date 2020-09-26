@@ -15,4 +15,4 @@ class CommandKey(Enum):
 class FunctionKey(Enum):
     Height = "height"
     Position = "position"
-    Pump = "pump"
+    Hold = "hold"

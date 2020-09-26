@@ -46,3 +46,4 @@ class ErrorCode(Enum):
     E0010 = 10  # UserHandler
     E0011 = 11  # CommandHandler
     E0012 = 12  # UserHandler
+    E0013 = 13  # UserHandler

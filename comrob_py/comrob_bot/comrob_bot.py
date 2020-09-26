@@ -85,15 +85,15 @@ class ComrobBot:
             await context.send("Command: \"position " + str(x) + " " + str(y) + "\" added to the command queue.")
 
         @self.__bot.command()
-        async def pump(context):
+        async def hold(context):
             user_name = context.author.name.lower()
             if self.__check_user(user_name):
                 await context.send("Only one command per user per session @" + user_name + ".")
                 return
-            self.__command_buffer.append({CommandKey.Function: FunctionKey.Pump,
+            self.__command_buffer.append({CommandKey.Function: FunctionKey.Hold,
                                           CommandKey.Args: [],
                                           CommandKey.User: user_name})
-            await context.send("Command: \"pump\" added to the command queue.")
+            await context.send("Command: \"hold\" added to the command queue.")
 
     def run(self):
         """
