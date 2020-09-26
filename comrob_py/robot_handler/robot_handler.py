@@ -88,3 +88,26 @@ class RobotHandler:
         self.__swift.set_position(z=z)
         self.__swift.flush_cmd()
         self.__z_uarm = z
+
+    def position(self, x, y):
+        """
+        Move robot to position in uarm frame.
+        :param x: new x-position of robot to move to, in uarm coordinate frame
+        :type x: float
+        :param y: new y-position of robot to move to, in uarm coordinate frame
+        :type y: float
+        """
+        self.__swift.set_position(x=x, y=y)
+        self.__swift.flush_cmd()
+        self.__x_uarm = x
+        self.__y_uarm = y
+        # TODO (ALR): add servo rotation
+
+    def pump(self, on):
+        """
+        Toggle the pump function on/off.
+        :param on: True to turn pump on
+        :type on: bool
+        """
+        self.__swift.set_pump(on=on)
+        self.__swift.flush_cmd()

@@ -26,6 +26,18 @@ class Coordinates:
         self.__coordinates = numpy.array([x, y, z])
         self.__coordinate_frame = coordinate_frame
 
+    def __copy__(self):
+        """
+        Copy override.
+        """
+        return Coordinates(self.x, self.y, self.z, self.__coordinate_frame)
+
+    def copy(self):
+        """
+        Copy override.
+        """
+        return self.__copy__()
+
     @property
     def x(self):
         """
@@ -74,17 +86,3 @@ class Coordinates:
         z setter.
         """
         self.__coordinates[2] = z
-
-    def transform(self, coordinate_frame):
-        """
-        Transform coordinates to given frame.
-        :param coordinate_frame: coordinate frame to transform to
-        :type coordinate_frame: CoordinateFrame
-        """
-        if coordinate_frame is self.__coordinate_frame:
-            message = "The coordinates are already in the desired frame."
-            raise ComrobError(ErrorCode.E0012, message)
-
-        if coordinate_frame is CoordinateFrame.Uarm and self.__coordinate_frame is CoordinateFrame.User:
-            
-

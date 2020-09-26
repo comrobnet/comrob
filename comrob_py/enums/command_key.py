@@ -8,10 +8,11 @@ from enum import Enum
 class CommandKey(Enum):
     Function = 0
     Args = 1
-    Kwargs = 2
-    User = 3
-    Count = 4
+    User = 2
+    Count = 3
 
 
 class FunctionKey(Enum):
     Height = "height"
+    Position = "position"
+    Pump = "pump"

@@ -70,9 +70,30 @@ class ComrobBot:
                 return
             self.__command_buffer.append({CommandKey.Function: FunctionKey.Height,
                                           CommandKey.Args: [z],
-                                          CommandKey.Kwargs: {},
                                           CommandKey.User: user_name})
-            await context.send("Command: height(" + str(z) + ") added to the command queue.")
+            await context.send("Command: \"height " + str(z) + "\" added to the command queue.")
+
+        @self.__bot.command()
+        async def position(context, x: int, y: int):
+            user_name = context.author.name.lower()
+            if self.__check_user(user_name):
+                await context.send("Only one command per user per session @" + user_name + ".")
+                return
+            self.__command_buffer.append({CommandKey.Function: FunctionKey.Position,
+                                          CommandKey.Args: [x, y],
+                                          CommandKey.User: user_name})
+            await context.send("Command: \"position " + str(x) + " " + str(y) + "\" added to the command queue.")
+
+        @self.__bot.command()
+        async def pump(context):
+            user_name = context.author.name.lower()
+            if self.__check_user(user_name):
+                await context.send("Only one command per user per session @" + user_name + ".")
+                return
+            self.__command_buffer.append({CommandKey.Function: FunctionKey.Pump,
+                                          CommandKey.Args: [],
+                                          CommandKey.User: user_name})
+            await context.send("Command: \"pump\" added to the command queue.")
 
     def run(self):
         """
@@ -106,7 +127,9 @@ class ComrobBot:
 
     def __check_user(self, user_name):
         """
-        Check if user already submitted command, if so dont add it to queue and send a message.
+        Check if user already submitted command in command queue.
+        :param user_name: name of user to be checked
+        :type user_name: str
         :return: true if user name in command buffer
         :rtype: bool
         """

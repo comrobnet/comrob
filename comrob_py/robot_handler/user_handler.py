@@ -3,7 +3,9 @@ The user handler handles the conversion from user to uarm frame, as well as vali
 """
 import numpy
 
+from comrob_py.enums.coordinate_frame import CoordinateFrame
 from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
+from comrob_py.robot_handler.coordinates import Coordinates
 from comrob_py.robot_handler.robot_handler import RobotHandler
 
 
@@ -12,7 +14,7 @@ class UserHandler:
     The UserHandler object handles the conversion from user to uarm frame, as well as validity and collision checks.
     """
     def __init__(self, edge_length=40, x_offset=0, y_offset=-320, z_offset=0, xy_base_offset=174, z_base_offset=93.5,
-                 min_radius_xy=120, max_radius_xy=340):
+                 min_radius_xy=120, max_radius_xy=340, x_start_user=4, y_start_user=8, z_start_user=3):
         """
         Constructor, defines basic values of user frame.
         :param edge_length: side length of unit cube in mm
@@ -41,58 +43,97 @@ class UserHandler:
         self.__min_radius_xy = min_radius_xy
         self.__max_radius_xy = max_radius_xy
 
+        # track coordinates in user frame
+        self.__coordinates = Coordinates(x_start_user, y_start_user, z_start_user, CoordinateFrame.User)
+        # track pump status
+        self.__pump = False
+
         # initialize robot handler
         self.__robot_handler = RobotHandler()
 
-    def user_to_uarm(self, x_user, y_user, z_user):
-        """
-        Transform x, y -position in user frame to x, y position in uarm frame. For user frame specification refer
-        to the board design. Checks if position is in workspace.
-        :param x_user: x-position in user frame
-        :type x_user: int
-        :param y_user: y-position in user frame
-        :type y_user: int
-        :param z_user: z-position in user frame
-        :type z_user: float
-        :return: position in uarm frame {'x': x, 'y', y}
-        :rtype: dict
-        """
-        # transform coordinates
-        # adding .5 to be in center of square
-        x_uarm = (x_user + .5) * self.__edge_length + self.__x_offset
-        y_uarm = (y_user + .5) * self.__edge_length + self.__y_offset
-        z_uarm = self.__z_offset + z_user * self.__edge_length
+        # move to start position
+        self.position(self.__coordinates.x, self.__coordinates.y)
+        self.height(self.__coordinates.z)
 
-        return {'x': x_uarm, 'y': y_uarm}
+    def __transform(self, coordinates, coordinate_frame):
+        """
+        Transform coordinates to given frame.
+        :param coordinates: coordinates to transform.
+        :type coordinates: Coordinates
+        :param coordinate_frame: coordinate frame to transform to
+        :type coordinate_frame: CoordinateFrame
+        """
+        if coordinate_frame is coordinates.coordinate_frame:
+            message = "The coordinates are already in the desired frame."
+            raise ComrobError(ErrorCode.E0012, message)
+
+        # transform from user to uarm
+        if coordinate_frame is CoordinateFrame.Uarm and coordinates.coordinate_frame is CoordinateFrame.User:
+            x_uarm = (coordinates.x + .5) * self.__edge_length + self.__x_offset
+            y_uarm = (coordinates.y + .5) * self.__edge_length + self.__y_offset
+            z_uarm = coordinates.z * self.__edge_length + self.__z_offset
+            coordinates_uarm = Coordinates(x_uarm, y_uarm, z_uarm, coordinate_frame)
+            self.__check_workspace(coordinates_uarm)
+            return coordinates_uarm
+
+        raise NotImplementedError()
 
     def height(self, z_user):
         """
         Move to new height in user frame.
         """
-        z_uarm = self.height_user_to_uarm(z_user, self.__robot_handler.x_uarm, self.__robot_handler.y_uarm)
+        # only change copy before all checks are performed
+        new_coordinates_user = self.__coordinates.copy()
+        new_coordinates_user.z = z_user
+        new_coordinates_uarm = self.__transform(new_coordinates_user, CoordinateFrame.Uarm)
         # TODO (ALR): Add collision tests.
-        self.__robot_handler.height(z_uarm)
+        self.__robot_handler.height(new_coordinates_uarm.z)
+        # change coordinates if everything is successful
+        self.__coordinates = new_coordinates_user
 
-    def check_workspace(self, x_uarm, y_uarm, z_uarm):
+    def position(self, x_user, y_user):
         """
-        Check if coordinates are within the workspace of the robot.
-         :param x_uarm: x-position in uarm frame
-        :type x_uarm: float
-        :param y_uarm: -position in uarm frame
-        :type y_uarm: float
-        :param z_uarm: z-position in uarm frame
-        :type z_uarm: float
+        Move to position in user frame, keep alignment of end-effector.
+        :param x_user: x-position in user frame to move to
+        :type x_user: int
+        :param y_user: y-position in user frame to move to
+        :type y_user: int
+        """
+        new_coordinates_user = self.__coordinates.copy()
+        new_coordinates_user.x = x_user
+        new_coordinates_user.y = y_user
+        new_coordinates_uarm = self.__transform(new_coordinates_user, CoordinateFrame.Uarm)
+        # TODO (ALR): Add collision tests.
+        self.__robot_handler.position(new_coordinates_uarm.x, new_coordinates_uarm.y)
+        # change coordinates if everything is successful
+        self.__coordinates = new_coordinates_user
+
+    def pump(self):
+        """
+        Toggle pump if allowed.
+        The end-effector needs to be above a block to start the pump. The block needs to be directly above the ground
+        or another block to turn the pump off.
+        """
+        # TODO (ALR): Add pump valid check.
+        self.__robot_handler.pump(not self.__pump)
+        self.__pump = not self.__pump
+
+    def __check_workspace(self, coordinates_uarm):
+        """
+        Check if coordinates in uarm frame are within the workspace of the robot.
+        :param coordinates_uarm: coordinates in uarm frame
+        :type coordinates_uarm: Coordinates
         """
         # check if input is in range of robot
         # TODO (ALR): This is not at all accurate, check if this is good enough.
-        xy_length = numpy.sqrt(x_uarm ** 2 + y_uarm ** 2)
+        xy_length = numpy.sqrt(coordinates_uarm.x ** 2 + coordinates_uarm.y ** 2)
         xy_radius = abs(xy_length - self.__xy_base_offset)
-        z_radius = abs(z_uarm - self.__z_base_offset)
+        z_radius = abs(coordinates_uarm.z - self.__z_base_offset)
         radius = numpy.sqrt(xy_radius ** 2 + z_radius ** 2)
         if radius > (self.__max_radius_xy - self.__xy_base_offset) or\
-                x_uarm < 0 or\
+                coordinates_uarm.x < 0 or\
                 xy_length <= self.__min_radius_xy or\
-                z_uarm < self.__edge_length + self.__z_offset:
+                coordinates_uarm.z < self.__edge_length + self.__z_offset:
             message = "Position is not in workspace of robot."
             raise ComrobError(ErrorCode.E0009, message)
 

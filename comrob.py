@@ -31,7 +31,11 @@ def main():
                                xy_base_offset=float(os.environ["XY_BASE_OFFSET"]),
                                z_base_offset=float(os.environ["Z_BASE_OFFSET"]),
                                min_radius_xy=float(os.environ["MIN_RADIUS_XY"]),
-                               max_radius_xy=float(os.environ["MAX_RADIUS_XY"]))
+                               max_radius_xy=float(os.environ["MAX_RADIUS_XY"]),
+                               x_start_user=int(os.environ["X_START_USER"]),
+                               y_start_user=int(os.environ["Y_START_USER"]),
+                               z_start_user=int(os.environ["Z_START_USER"]),
+                               )
     # wait for comrob bot to start before sending messages etc
     time.sleep(3)
     command_buffer = deque()
@@ -50,7 +54,7 @@ def main():
         try:
             command = select_command(command_buffer)
             send_message(comrob_bot, "Selected command: " + command[CommandKey.Function].value +
-                         ", args: " + str(command[CommandKey.Args]) +
+                         str(command[CommandKey.Args]) +
                          ", votes: " + str(command[CommandKey.Count]) + ".")
             # try to call function on uarm
             function = getattr(user_handler, command[CommandKey.Function].value)
