@@ -1,6 +1,7 @@
 """
 The user handler handles the conversion from user to uarm frame, as well as validity and collision checks.
 """
+import math
 import numpy
 import time
 
@@ -14,12 +15,15 @@ class UserHandler:
     """
     The UserHandler object handles the conversion from user to uarm frame, as well as validity and collision checks.
     """
-    def __init__(self, edge_length=40, x_offset=0, y_offset=-320, z_offset=0, xy_base_offset=174, z_base_offset=93.5,
-                 min_radius_xy=120, max_radius_xy=340, x_start_user=4, y_start_user=8, z_start_user=3):
+    def __init__(self, edge_length_xy=40, edge_length_z=35, x_offset=0, y_offset=-320, z_offset=0, xy_base_offset=174,
+                 z_base_offset=93.5, min_radius_xy=120, max_radius_xy=340, x_start_user=4, y_start_user=8,
+                 z_start_user=3):
         """
         Constructor, defines basic values of user frame.
-        :param edge_length: side length of unit cube in mm
-        :type edge_length: float
+        :param edge_length_xy: side length of cube in mm
+        :type edge_length_xy: float
+        :param edge_length_z: height length of cube in mm, differs because of locking mechanism
+        :type edge_length_z: float
         :param x_offset: offset of user frame in x direction in mm
         :type x_offset: float
         :param y_offset: offset of user frame in y direction in mm
@@ -35,7 +39,8 @@ class UserHandler:
         :param max_radius_xy: maximum workspace radius
         :type max_radius_xy: float
         """
-        self.__edge_length = edge_length
+        self.__edge_length_xy = edge_length_xy
+        self.__edge_length_z = edge_length_z
         self.__x_offset = x_offset
         self.__y_offset = y_offset
         self.__z_offset = z_offset
@@ -44,18 +49,23 @@ class UserHandler:
         self.__min_radius_xy = min_radius_xy
         self.__max_radius_xy = max_radius_xy
 
-        # track coordinates in user frame
-        self.__coordinates = Coordinates(x_start_user, y_start_user, z_start_user, CoordinateFrame.User)
         # track pump status
         self.__pump = False
 
         # initialize robot handler
         self.__robot_handler = RobotHandler()
+        
+        # start coordinates in uarm frame
+        start_coordinates_uarm = Coordinates(self.__robot_handler.x_uarm, self.__robot_handler.y_uarm,
+                                             self.__robot_handler.z_uarm, CoordinateFrame.Uarm)
+        # we need to set the coordinates here to be able to correct the wrist when moving to the starting coordinates
+        self.__coordinates = self.__transform(start_coordinates_uarm, CoordinateFrame.User)
 
         # move to start position
-        self.position(self.__coordinates.x, self.__coordinates.y)
-        self.height(self.__coordinates.z)
+        self.position(x_start_user, y_start_user)
+        self.height(z_start_user)
 
+    # TODO (ALR): Think about moving this to coordinates.
     def __transform(self, coordinates, coordinate_frame):
         """
         Transform coordinates to given frame.
@@ -70,12 +80,21 @@ class UserHandler:
 
         # transform from user to uarm
         if coordinate_frame is CoordinateFrame.Uarm and coordinates.coordinate_frame is CoordinateFrame.User:
-            x_uarm = (coordinates.x + .5) * self.__edge_length + self.__x_offset
-            y_uarm = (coordinates.y + .5) * self.__edge_length + self.__y_offset
-            z_uarm = (coordinates.z + .5) * self.__edge_length + self.__z_offset
+            x_uarm = (coordinates.x + .5) * self.__edge_length_xy + self.__x_offset
+            y_uarm = (coordinates.y + .5) * self.__edge_length_xy + self.__y_offset
+            z_uarm = (coordinates.z + .5) * self.__edge_length_z + self.__z_offset
             coordinates_uarm = Coordinates(x_uarm, y_uarm, z_uarm, coordinate_frame)
             self.__check_workspace(coordinates_uarm)
             return coordinates_uarm
+        
+        # transform from uarm to user
+        if coordinate_frame is CoordinateFrame.User and coordinates.coordinate_frame is CoordinateFrame.Uarm:
+            self.__check_workspace(coordinates)
+            x_user = (coordinates.x - self.__x_offset) / self.__edge_length_xy - 0.5
+            y_user = (coordinates.y - self.__y_offset) / self.__edge_length_xy - 0.5
+            z_user = (coordinates.z - self.__z_offset) / self.__edge_length_z - 0.5
+            coordinates_user = Coordinates(x_user, y_user, z_user, coordinate_frame)
+            return coordinates_user
 
         raise NotImplementedError()
 
@@ -104,10 +123,9 @@ class UserHandler:
         new_coordinates_user.x = x_user
         new_coordinates_user.y = y_user
         new_coordinates_uarm = self.__transform(new_coordinates_user, CoordinateFrame.Uarm)
-        # TODO (ALR): Add collision tests.
-        self.__robot_handler.position(new_coordinates_uarm.x, new_coordinates_uarm.y)
         # change wrist rotation to keep orthogonal cube orientation
         new_wrist_angle = self.__calculate_equal_wrist_rotation(self.__coordinates, new_coordinates_user)
+        self.__robot_handler.position(new_coordinates_uarm.x, new_coordinates_uarm.y)
         self.__robot_handler.rotate_wrist(new_wrist_angle)
         # change coordinates if everything is successful
         self.__coordinates = new_coordinates_user
@@ -118,11 +136,10 @@ class UserHandler:
         The end-effector needs to be above a block to start the pump. The block needs to be directly above the ground
         or another block to turn the pump off.
         """
-        # TODO (ALR): Add valid check.
         hold_coordinates_user = self.__coordinates.copy()
         hold_coordinates_uarm = self.__transform(hold_coordinates_user, CoordinateFrame.Uarm)
         z_before_move_uarm = hold_coordinates_uarm.z
-        hold_coordinates_uarm.z -= 0.5 * self.__edge_length
+        hold_coordinates_uarm.z -= 0.5 * self.__edge_length_z
         # move down to block surface and wait for command to finish
         self.__robot_handler.height(hold_coordinates_uarm.z)
         time.sleep(0.5)
@@ -148,7 +165,7 @@ class UserHandler:
         if radius > (self.__max_radius_xy - self.__xy_base_offset) or\
                 coordinates_uarm.x < 0 or\
                 xy_length <= self.__min_radius_xy or\
-                coordinates_uarm.z < self.__edge_length + self.__z_offset:
+                coordinates_uarm.z < self.__edge_length_xy + self.__z_offset:
             message = "Position is not in workspace of robot."
             raise ComrobError(ErrorCode.E0009, message)
 
@@ -174,10 +191,32 @@ class UserHandler:
         # calculate the corresponding new wrist angle for new position, so that the orientation of the grabbed object
         # stays the same
         wrist_new = -beta_1 + alpha_2_deg + 90.0
-        # TODO (ALR): We can add a modulo here if there is an issue with this.
-        # check that the wrist angle is within the servos range
-        if not (0 <= wrist_new <= 180):
+        # TODO (ALR): Remove once servo is changed.
+        wrist_corrected = self.__correct_servo_range(wrist_new)
+        # TODO (ALR): Add check for block type.
+        # check that the wrist angle is within the servos range, if not rotate by 90 degrees
+        if not (0 <= wrist_corrected <= 180):
+            wrist_new -= math.copysign(90.0, wrist_new)
+            wrist_corrected = self.__correct_servo_range(wrist_new)
+
+        if not (0 <= wrist_corrected <= 180):
             message = "Wrist angle out of range"
             raise ComrobError(ErrorCode.E0003, message)
 
-        return wrist_new
+        return wrist_corrected
+
+    @staticmethod
+    def __correct_servo_range(wrist_angle_deg):
+        """
+        Correction of the faulty servo angles in a linear way.
+        """
+        # TODO (ALR): This should be deprecated after installing a higher quality servo.
+        # the range [11.0, 173.0] was measured of the real robot
+        lower_limit = 11.0
+        upper_limit = 173.0
+        if wrist_angle_deg <= 90.0:
+            wrist_angle_corrected = (wrist_angle_deg - lower_limit) * 90.0 / (90.0 - lower_limit)
+        else:
+            wrist_angle_corrected = 90.0 + 90.0 * (wrist_angle_deg - 90) / (upper_limit - 90.0)
+
+        return wrist_angle_corrected

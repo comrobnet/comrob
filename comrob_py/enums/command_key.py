@@ -1,5 +1,5 @@
 """
-Command enum class storing keys for enum dictionaries.
+CommandKey and FunctinKey enum classes, storing keys for enum dictionaries.
 """
 
 from enum import Enum

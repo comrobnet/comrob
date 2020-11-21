@@ -43,4 +43,3 @@ class MockSwiftApi:
 
     def flush_cmd(self, timeout=None, wait_stop=False):
         print("flush_cmd ", timeout, wait_stop)
-

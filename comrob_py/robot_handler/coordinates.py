@@ -4,7 +4,6 @@ This file contains the coordinates object, which is used to store coordinates in
 import numpy
 
 from comrob_py.enums.coordinate_frame import CoordinateFrame
-from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
 
 
 class Coordinates:
@@ -70,6 +69,8 @@ class Coordinates:
     def x(self, x):
         """
         x setter.
+        :param x: new x value
+        :type x: float
         """
         self.__coordinates[0] = x
 
@@ -77,6 +78,8 @@ class Coordinates:
     def y(self, y):
         """
         y setter.
+        :param y: new y value
+        :type y: float
         """
         self.__coordinates[1] = y
     
@@ -84,5 +87,7 @@ class Coordinates:
     def z(self, z):
         """
         z setter.
+        :param z: new z value
+        :type z: float
         """
         self.__coordinates[2] = z

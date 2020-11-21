@@ -21,10 +21,12 @@ def main():
     load_dotenv()
     comrob_bot = ComrobBot(irc_token=os.environ["TMI_TOKEN"], nick=os.environ["BOT_NICK"],
                            prefix=os.environ["BOT_PREFIX"], initial_channels=[os.environ["CHANNEL"]])
-    # start main thread
+    # run comrobbot in separate thread
     comrob_bot_thread_1 = threading.Thread(target=comrob_bot.run)
     comrob_bot_thread_1.start()
-    user_handler = UserHandler(edge_length=float(os.environ["EDGE_LENGTH"]),
+    # start robot / user handler
+    user_handler = UserHandler(edge_length_xy=float(os.environ["EDGE_LENGTH_XY"]),
+                               edge_length_z=float(os.environ["EDGE_LENGTH_Z"]),
                                x_offset=float(os.environ["X_OFFSET"]),
                                y_offset=float(os.environ["Y_OFFSET"]),
                                z_offset=float(os.environ["Z_OFFSET"]),
@@ -34,23 +36,20 @@ def main():
                                max_radius_xy=float(os.environ["MAX_RADIUS_XY"]),
                                x_start_user=int(os.environ["X_START_USER"]),
                                y_start_user=int(os.environ["Y_START_USER"]),
-                               z_start_user=int(os.environ["Z_START_USER"]),
-                               )
-    # wait for comrob bot to start before sending messages etc
+                               z_start_user=int(os.environ["Z_START_USER"]))
+    # wait for comrob bot to start before sending messages
     time.sleep(3)
-    command_buffer = deque()
-    loop_time = 30
+    # time for collection and execution of one command in [s]
+    loop_time = 10
     while True:
-        # define threads for loop
-        comrob_bot_thread_2 = threading.Thread(target=comrob_bot.clear_command_buffer)
         send_message(comrob_bot, "You have now " + str(loop_time) + "s to enter commands for the robot.")
         time.sleep(loop_time)
 
-        # get buffer
+        # get buffer from bot
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(comrob_bot.get_command_buffer)
             command_buffer = future.result()
-
+        # try selecting and running a command from the command queue
         try:
             command = select_command(command_buffer)
             send_message(comrob_bot, "Selected command: " + command[CommandKey.Function].value +
@@ -64,6 +63,7 @@ def main():
             send_message(comrob_bot, error.message)
 
         # clear buffer of bot
+        comrob_bot_thread_2 = threading.Thread(target=comrob_bot.clear_command_buffer)
         comrob_bot_thread_2.start()
         comrob_bot_thread_2.join()
 

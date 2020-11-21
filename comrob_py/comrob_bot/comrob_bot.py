@@ -49,21 +49,24 @@ class ComrobBot:
         async def event_message(context):
             """
             Runs every time a message is sent in chat.
+            :param context: message context
+            :type context: twitchio.dataclasses.Message
             """
             # make sure the bot ignores itself and the streamer
             if context.author.name.lower() == self.__bot.nick.lower():
                 return
 
-            # # if content of message is a command, add it to command buffer
-            # if context.content[0] == "!":
-            #     command_buffer.append(context.content)
-            #
-            # print("Command Buffer: ", command_buffer)
-
             await self.__bot.handle_commands(context)
 
         @self.__bot.command()
         async def height(context, z: int):
+            """
+            Height command !height z. Adds command "height" with argument z to the command queue.
+            :param context: message context
+            :type context: twitchio.dataclasses.Message
+            :param z: argument of height function, indicates target height of robot in user frame
+            :type z: int
+            """
             user_name = context.author.name.lower()
             if self.__check_user(user_name):
                 await context.send("Only one command per user per session @" + user_name + ".")
@@ -75,6 +78,15 @@ class ComrobBot:
 
         @self.__bot.command()
         async def position(context, x: int, y: int):
+            """
+            Position command !position x y. Adds command position with arguments x and y to the command queue.
+            :param context: message context
+            :type context: twitchio.dataclasses.Message
+            :param x: argument of position function, indicates target x-position of robot in user frame
+            :type x: int
+            :param y: argument of position function, indicates target y-position of robot in user frame
+            :type y: int
+            """
             user_name = context.author.name.lower()
             if self.__check_user(user_name):
                 await context.send("Only one command per user per session @" + user_name + ".")
@@ -86,6 +98,11 @@ class ComrobBot:
 
         @self.__bot.command()
         async def hold(context):
+            """
+            Hold command !position x y. Adds command hold to the command queue. Toggles holding of a block.
+            :param context: message context
+            :type context: twitchio.dataclasses.Message
+            """
             user_name = context.author.name.lower()
             if self.__check_user(user_name):
                 await context.send("Only one command per user per session @" + user_name + ".")
@@ -103,7 +120,9 @@ class ComrobBot:
 
     def get_command_buffer(self):
         """
-        Returns command buffer.
+        Get command buffer.
+        :return: buffer storing all command added
+        :rtype: deque
         """
         return self.__command_buffer.copy()
 

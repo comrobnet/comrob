@@ -105,6 +105,7 @@ class RobotHandler:
         self.__swift.flush_cmd()
         self.__x_uarm = x
         self.__y_uarm = y
+        return
 
     def pump(self, on):
         """
@@ -121,18 +122,7 @@ class RobotHandler:
         :param angle_deg: absolute wrist angle in degrees
         :type angle_deg: float
         """
-        # TODO (ALR): This should be removed once a better servo is installed.
-        angle_deg_corrected = self.__correct_servo_range(angle_deg)
-        self.__swift.set_wrist(angle=angle_deg_corrected, wait=True)
+        self.__swift.set_wrist(angle=angle_deg, wait=True)
         self.__swift.flush_cmd()
         # we still keep track of the real angle
         self.__wrist_angle = angle_deg
-
-    @staticmethod
-    def __correct_servo_range(wrist_angle_deg):
-        """
-        Correction of the faulty servo angles in a linear way.
-        """
-        # TODO (ALR): This should be deprecated after installing a higher quality servo.
-        # the range [10.0, 179.2] was measured of the real robot
-        return 10.0 + (wrist_angle_deg / 180.0) * (179.2 - 10.0)

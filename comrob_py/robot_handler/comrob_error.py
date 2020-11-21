@@ -31,16 +31,16 @@ class ComrobError(Exception):
 
 class ErrorCode(Enum):
     """
-    Unique ErrorCOde enum for each error.
+    Unique ErrorCode enum for each error.
     """
-    E0000 = 0  # TcpServer
-    E0001 = 1  # TcpServer
-    E0002 = 2  # TcpServer
-    E0003 = 3  # TcpServer
-    E0004 = 4  # TcpServer
-    E0005 = 5  # TcpServer
-    E0006 = 6  # TcpServer
-    E0007 = 7  # TcpServer
+    E0000 = 0
+    E0001 = 1
+    E0002 = 2
+    E0003 = 3  
+    E0004 = 4  
+    E0005 = 5  
+    E0006 = 6  
+    E0007 = 7  
     E0008 = 8  # RobotHandler
     E0009 = 9  # UserHandler
     E0010 = 10  # UserHandler

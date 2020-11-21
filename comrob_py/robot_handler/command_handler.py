@@ -1,10 +1,9 @@
 """
-This file offers functions that handle the command queue.
+This file offers utility functions that handle the command queue.
 """
-import time
 import threading
 
-from comrob_py.enums.command_key import CommandKey, FunctionKey
+from comrob_py.enums.command_key import CommandKey
 from comrob_py.robot_handler.comrob_error import ComrobError, ErrorCode
 
 
@@ -42,7 +41,7 @@ def select_command(command_queue):
 
 def send_message(bot, message):
     """
-    Utility function which sends a message on the bot.
+    Utility function which sends a message using the bot.
     :param bot: bot on which to send the message
     :type bot: ComrobBot
     :param message: message to send on the bot
