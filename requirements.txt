@@ -1,0 +1,17 @@
+# uArm-Python-SDK requirements
+pyserial>3.0
+
+# PyTest   (https://pytest.org/)
+# -  mature full-featured testing tool that helps you write better programs
+# -  running unit tests with and without code coverage
+pytest==5.0.1
+pytest-cov==2.7.1
+
+# twitch api
+twitchio==1.1.0
+
+# handling .enf
+python-dotenv==0.14.0
+
+# NumPy
+numpy==1.19.2
