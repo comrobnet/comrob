@@ -15,7 +15,7 @@ class UserHandler:
     """
     The UserHandler object handles the conversion from user to uarm frame, as well as validity and collision checks.
     """
-    def __init__(self, edge_length_xy=40, edge_length_z=35, x_offset=0, y_offset=-320, z_offset=0, xy_base_offset=174,
+    def __init__(self, edge_length_xy=60, edge_length_z=4, x_offset=0, y_offset=-320, z_offset=0, xy_base_offset=174,
                  z_base_offset=93.5, min_radius_xy=120, max_radius_xy=340, x_start_user=4, y_start_user=8,
                  z_start_user=3):
         """
@@ -123,8 +123,8 @@ class UserHandler:
         new_coordinates_user.x = x_user
         new_coordinates_user.y = y_user
         new_coordinates_uarm = self.__transform(new_coordinates_user, CoordinateFrame.Uarm)
-        # change wrist rotation to keep orthogonal cube orientation
-        new_wrist_angle = self.__calculate_equal_wrist_rotation(self.__coordinates, new_coordinates_user)
+        # change wrist rotation to keep end-effector aligned with the user frame x-axis
+        new_wrist_angle = self.__calculate_equal_wrist_rotation(new_coordinates_uarm)
         self.__robot_handler.position(new_coordinates_uarm.x, new_coordinates_uarm.y)
         self.__robot_handler.rotate_wrist(new_wrist_angle)
         # change coordinates if everything is successful
@@ -165,39 +165,31 @@ class UserHandler:
         if radius > (self.__max_radius_xy - self.__xy_base_offset) or\
                 coordinates_uarm.x < 0 or\
                 xy_length <= self.__min_radius_xy or\
-                coordinates_uarm.z < self.__edge_length_xy + self.__z_offset:
+                coordinates_uarm.z < self.__edge_length_z + self.__z_offset:
             message = "Position is not in workspace of robot."
             raise ComrobError(ErrorCode.E0009, message)
 
-    def __calculate_equal_wrist_rotation(self, old_coordinates_user, new_coordinates_user):
+    def __calculate_equal_wrist_rotation(self, coordinates_uarm):
         """
-        Calculates new wrist rotation that keeps the end-effector rotation equal in the world frame.
-        :param old_coordinates_user: coordinates of previous position in user frame
-        :type old_coordinates_user: Coordinates
-        :param new_coordinates_user: coordinates of new position in user frame
-        :type new_coordinates_user: Coordinates
-        :return: new wrist angle that keeps the object in the same orientation
+        Calculates new wrist rotation that keeps the end-effector rotation in line with the x-axis of the user frame.
+        :param coordinates_uarm: coordinates of the end-effector in the uarm frame
+        :type coordinates_uarm: Coordinates
+        :return: new wrist angle that keeps the end-effector aligned with the x-axis of the user frame
         :rtype: float
         """
-        old_coordinates_uarm = self.__transform(old_coordinates_user, CoordinateFrame.Uarm)
-        new_coordinates_uarm = self.__transform(new_coordinates_user, CoordinateFrame.Uarm)
-        # angle from world x-axis to arm
-        alpha_1_rad = numpy.arctan2(old_coordinates_uarm.y, old_coordinates_uarm.x)
-        alpha_2_rad = numpy.arctan2(new_coordinates_uarm.y, new_coordinates_uarm.x)
-        alpha_1_deg = numpy.degrees(alpha_1_rad)
-        alpha_2_deg = numpy.degrees(alpha_2_rad)
-        # angle from world x-axis to end effector orientation (-90 because of the asymmetric servo range 0-180)
-        beta_1 = alpha_1_deg + 90.0 - self.__robot_handler.wrist_angle
-        # calculate the corresponding new wrist angle for new position, so that the orientation of the grabbed object
-        # stays the same
-        wrist_new = -beta_1 + alpha_2_deg + 90.0
-        # TODO (ALR): Remove once servo is changed.
-        wrist_corrected = self.__correct_servo_range(wrist_new)
-        # TODO (ALR): Add check for block type.
+        # angle needs to be shifted by 90 degrees since the servo goes from [0 - 180] degrees
+        wrist_angle_aligned = numpy.arctan2(coordinates_uarm.y, coordinates_uarm.x) * 180 / math.pi + 90.0
+
+        # TODO (ALR): Add check for block type. Might be able to make this simpler
         # check that the wrist angle is within the servos range, if not rotate by 90 degrees
-        if not (0 <= wrist_corrected <= 180):
-            wrist_new -= math.copysign(90.0, wrist_new)
-            wrist_corrected = self.__correct_servo_range(wrist_new)
+        if not (0 <= wrist_angle_aligned <= 180):
+            print("flipped")
+            if wrist_angle_aligned <= 0:
+                wrist_angle_aligned += 90
+            else:
+                wrist_angle_aligned -= 90
+
+        wrist_corrected = self.__correct_servo_range(wrist_angle_aligned)
 
         if not (0 <= wrist_corrected <= 180):
             message = "Wrist angle out of range"
@@ -211,12 +203,8 @@ class UserHandler:
         Correction of the faulty servo angles in a linear way.
         """
         # TODO (ALR): This should be deprecated after installing a higher quality servo.
-        # the range [11.0, 173.0] was measured of the real robot
-        lower_limit = 11.0
-        upper_limit = 173.0
-        if wrist_angle_deg <= 90.0:
-            wrist_angle_corrected = (wrist_angle_deg - lower_limit) * 90.0 / (90.0 - lower_limit)
-        else:
-            wrist_angle_corrected = 90.0 + 90.0 * (wrist_angle_deg - 90) / (upper_limit - 90.0)
-
-        return wrist_angle_corrected
+        # TODO (ALR): Add values to .env file
+        # the range [7, 169] was measured of the real robot
+        lower_limit = 7
+        upper_limit = 169
+        return ((wrist_angle_deg - lower_limit) / (upper_limit - lower_limit)) * 180

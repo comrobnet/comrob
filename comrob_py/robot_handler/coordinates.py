@@ -31,6 +31,12 @@ class Coordinates:
         """
         return Coordinates(self.x, self.y, self.z, self.__coordinate_frame)
 
+    def __str__(self):
+        """
+        Str override.
+        """
+        return str(self.__coordinates) + " " + str(self.__coordinate_frame)
+
     def copy(self):
         """
         Copy override.
