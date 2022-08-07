@@ -47,3 +47,4 @@ class ErrorCode(Enum):
     E0011 = 11  # CommandHandler
     E0012 = 12  # UserHandler
     E0013 = 13  # UserHandler
+    E0014 = 14 # TicTacToe
